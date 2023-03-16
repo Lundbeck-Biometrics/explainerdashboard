@@ -11,10 +11,11 @@ from explainerdashboard import ExplainerDashboard
 import threading
 from pathlib import Path
 
+logfile = "/tmp/dashboard-explainer-watchdog-listener-python-logging.log"
+
 def get_logger(logger_name: str = "script_logger") -> logging.Logger:
     """Returns the configured logger for the pipeline script"""
-    file_handler = logging.FileHandler(filename="pipeline.log")
-    
+    file_handler = logging.FileHandler(filename=logfile)
     stdout_handler = logging.StreamHandler(stream=sys.stdout)
     handlers = [file_handler, stdout_handler]
 
