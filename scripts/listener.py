@@ -32,7 +32,7 @@ logger = get_logger()
 logger.info('starting dashboard listener')
 
 DIRECTORY_TO_WATCH = "/home/sagemaker-user/dashboard-definitions"
-logger.info('hello'):
+logger.info('hello')
 
 if not Path(DIRECTORY_TO_WATCH).exists():
     logger.info('making directory:', DIRECTORY_TO_WATCH)
