@@ -55,32 +55,42 @@ class Handler(FileSystemEventHandler):
 
     @staticmethod
     def on_any_event(event):
-        logger.info(
-            f"[{time.asctime()}] noticed {event.event_type} on: [{event.src_path}]"
-        )
+        logger.info(f"{event.event_type} on: [{event.src_path}]")
+
+        # TODO: remove log threading
+        logger.info('>>>>> Threads')
+        for thread in threading.enumerate(): 
+            logger.info(
+                f'\t{thread.name = } {thread.is_alive() = } {thread.ident = } {thread.native_id = }'
+            )
+
         if event.is_directory:
             return None
 
         elif event.event_type == 'created':
             time.sleep(1)
             # Take any action here when a file is first created.
-            logger.info("Received created event - %s." % event.src_path)
 
+            logger.info(f'{is_yml(event.src_path) = }')
+            logger.info(f'{has_corresponding_joblib(event.src_path) = }')
 
             if is_yml(event.src_path) and has_corresponding_joblib(event.src_path):
-                logger.info("Starting explainer dashboard")
                 file = extract_file(event.src_path)
-                threading.Thread(target=lambda: ExplainerDashboard.from_config(file).run()).start()
+                logger.info(f"Starting explainer dashboard thread for {file}")
+                threading.Thread(
+                    target=lambda: ExplainerDashboard.from_config(file).run(),
+                    name=file
+                ).start()
 
             # TODO Treat edge case race condition when model file is read before yaml file
 
         elif event.event_type == 'modified':
             # TODO reload explainerdashboard at port in config
-            logger.info("Received modified event - %s." % event.src_path)
+            pass
 
         elif event.event_type == 'deleted':
             # TODO stop explainerdashboard at port in config; might need to map yaml config to port
-            logger.info("Received deleted event - %s." % event.src_path)
+            pass
 
 
 def is_yml(file):
