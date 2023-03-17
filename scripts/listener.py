@@ -93,7 +93,7 @@ def extract_file(file):
 
 def has_corresponding_joblib(file_path):
     '''check if a file with the same name but with the extension .joblib exists'''
-    return Path(file_path.replace('.yaml', '.joblib')).exist()
+    return Path(file_path.replace('.yaml', '.joblib')).exists()
 
 
 if __name__ == '__main__':
