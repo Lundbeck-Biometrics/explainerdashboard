@@ -129,6 +129,10 @@ if __name__ == '__main__':
     logger.info(f'changing into: {DIRECTORY_TO_WATCH}')
     os.chdir(DIRECTORY_TO_WATCH)
 
+    # TODO remove startup logging
+    log_files()
+    log_threads()
+
     # start watcher
     logger.info('starting watcher')
     w = Watcher()
