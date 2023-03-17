@@ -46,10 +46,26 @@ class Watcher:
                 time.sleep(1)
         except:
             self.observer.stop()
-            logger.info("Error")
+            logger.info("Exiting - stopping threads")
+            for thread in threading.enumerate(): 
+                logger.info(f'{thread.name = }')
+                thread.join()
+            log_threads()
 
         self.observer.join()
 
+# TODO: remove log threads
+def log_threads():
+    logger.info('>>>>> Threads')
+    for thread in threading.enumerate(): 
+        logger.info(f'{thread.name = }\t{thread.is_alive() = }')
+
+# TODO: remove log files
+def log_files():
+    logger.info('>>>>> Files:')
+    for path in Path('.').iterdir(): 
+        logger.info(f'{path.name = }')
+    
 
 class Handler(FileSystemEventHandler):
 
@@ -57,12 +73,8 @@ class Handler(FileSystemEventHandler):
     def on_any_event(event):
         logger.info(f"{event.event_type} on: [{event.src_path}]")
 
-        # TODO: remove log threading
-        logger.info('>>>>> Threads')
-        for thread in threading.enumerate(): 
-            logger.info(
-                f'\t{thread.name = } {thread.is_alive() = } {thread.ident = } {thread.native_id = }'
-            )
+        log_files()
+        log_threads()
 
         if event.is_directory:
             return None
@@ -85,11 +97,12 @@ class Handler(FileSystemEventHandler):
             # TODO Treat edge case race condition when model file is read before yaml file
 
         elif event.event_type == 'modified':
-            # TODO reload explainerdashboard at port in config
+            # TODO stop explainerdashboard thread at port in config
             pass
 
         elif event.event_type == 'deleted':
             # TODO stop explainerdashboard at port in config; might need to map yaml config to port
+            
             pass
 
 
