@@ -63,7 +63,7 @@ class Handler(FileSystemEventHandler):
             return
         
         # ignore events that are not new files
-        if event.event_type is not 'created':
+        if event.event_type != 'created':
             return
         
         # ignore non yaml changes
