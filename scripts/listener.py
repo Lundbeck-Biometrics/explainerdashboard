@@ -3,9 +3,7 @@ import time
 import os
 import sys
 import logging
-from watchdog.observers import Observer
 from watchdog.observers.polling import PollingObserver
-from watchdog.events import PatternMatchingEventHandler
 from watchdog.events import FileSystemEventHandler
 from explainerdashboard import ExplainerDashboard
 import threading
@@ -50,22 +48,9 @@ class Watcher:
             for thread in threading.enumerate(): 
                 logger.info(f'{thread.name = }')
                 thread.join()
-            log_threads()
 
         self.observer.join()
 
-# TODO: remove log threads
-def log_threads():
-    logger.info('>>>>> Threads')
-    for thread in threading.enumerate(): 
-        logger.info(f'{thread.name = }\t{thread.is_alive() = }')
-
-# TODO: remove log files
-def log_files():
-    logger.info('>>>>> Files:')
-    for path in Path('.').iterdir(): 
-        logger.info(f'{path.name = }')
-    
 
 class Handler(FileSystemEventHandler):
 
@@ -73,38 +58,32 @@ class Handler(FileSystemEventHandler):
     def on_any_event(event):
         logger.info(f"{event.event_type} on: [{event.src_path}]")
 
-        log_files()
-        log_threads()
-
+        # ignore directory events
         if event.is_directory:
-            return None
+            return
+        
+        # ignore events that are not new files
+        if event.event_type is not 'created':
+            return
+        
+        # ignore non yaml changes
+        if is_yml(event.src_path):
+            return
 
-        elif event.event_type == 'created':
-            time.sleep(1)
-            # Take any action here when a file is first created.
+        # it may take a second for the joblib (below) to be added
+        time.sleep(1)
 
-            logger.info(f'{is_yml(event.src_path) = }')
-            logger.info(f'{has_corresponding_joblib(event.src_path) = }')
+        # ignore yaml additions without joblib
+        if not has_corresponding_joblib(event.src_path):
+            return
 
-            if is_yml(event.src_path) and has_corresponding_joblib(event.src_path):
-                file = extract_file(event.src_path)
-                logger.info(f"Starting explainer dashboard thread for {file}")
-                threading.Thread(
-                    target=lambda: ExplainerDashboard.from_config(file).run(),
-                    name=file
-                ).start()
-
-            # TODO Treat edge case race condition when model file is read before yaml file
-
-        elif event.event_type == 'modified':
-            # TODO stop explainerdashboard thread at port in config
-            pass
-
-        elif event.event_type == 'deleted':
-            # TODO stop explainerdashboard at port in config; might need to map yaml config to port
-            
-            pass
-
+        # start dashboard
+        file = extract_file(event.src_path)
+        logger.info(f"Starting explainer dashboard thread for {file}")
+        threading.Thread(
+            target=lambda: ExplainerDashboard.from_config(file).run(),
+            name=file
+        ).start()
 
 def is_yml(file):
     '''check if a file extension is .yml'''
@@ -128,10 +107,6 @@ if __name__ == '__main__':
 
     logger.info(f'changing into: {DIRECTORY_TO_WATCH}')
     os.chdir(DIRECTORY_TO_WATCH)
-
-    # TODO remove startup logging
-    log_files()
-    log_threads()
 
     # start watcher
     logger.info('starting watcher')
