@@ -11,6 +11,8 @@ from explainerdashboard import ExplainerDashboard
 import threading
 from pathlib import Path
 
+# constants
+DIRECTORY_TO_WATCH = "/home/sagemaker-user/dashboard-definitions"
 logfile = "/tmp/dashboard-explainer-watchdog-listener-python-logging.log"
 
 def get_logger(logger_name: str = "script_logger") -> logging.Logger:
@@ -28,16 +30,6 @@ def get_logger(logger_name: str = "script_logger") -> logging.Logger:
     logger = logging.getLogger(logger_name)
     return logger
 
-logger = get_logger()
-
-logger.info('starting dashboard listener')
-
-DIRECTORY_TO_WATCH = "/home/sagemaker-user/dashboard-definitions"
-logger.info('hello')
-
-if not Path(DIRECTORY_TO_WATCH).exists():
-    logger.info('making directory:', DIRECTORY_TO_WATCH)
-    Path(DIRECTORY_TO_WATCH).mkdir()
 
 class Watcher:
 
@@ -51,7 +43,7 @@ class Watcher:
         self.observer.start()
         try:
             while True:
-                time.sleep(5)
+                time.sleep(1)
         except:
             self.observer.stop()
             logger.info("Error")
@@ -70,15 +62,14 @@ class Handler(FileSystemEventHandler):
             return None
 
         elif event.event_type == 'created':
-            time.sleep(5)
-            logger.info("Error")
+            time.sleep(1)
             # Take any action here when a file is first created.
             logger.info("Received created event - %s." % event.src_path)
 
-            file = extract_file(event.src_path)
 
-            if is_yml(file):
+            if is_yml(event.src_path) and has_corresponding_joblib(event.src_path):
                 logger.info("Starting explainer dashboard")
+                file = extract_file(event.src_path)
                 threading.Thread(target=lambda: ExplainerDashboard.from_config(file).run()).start()
 
             # TODO Treat edge case race condition when model file is read before yaml file
@@ -91,16 +82,31 @@ class Handler(FileSystemEventHandler):
             # TODO stop explainerdashboard at port in config; might need to map yaml config to port
             logger.info("Received deleted event - %s." % event.src_path)
 
-#function to check if a file extension is .yml
-def is_yml(file):
-    return file.endswith(".yml") or file.endswith(".yaml")
 
-#function to extract file from a file path
+def is_yml(file):
+    '''check if a file extension is .yml'''
+    return file.lower().endswith(".yaml")
+
 def extract_file(file):
-    return file.split("/")[-1]       
+    '''extract file from a file path'''
+    return file.split("/")[-1]
+
+def has_corresponding_joblib(file_path):
+    '''check if a file with the same name but with the extension .joblib exists'''
+    return Path(file_path.replace('.yaml', '.joblib')).exist()
+
 
 if __name__ == '__main__':
+    logger = get_logger()
+
+    if not Path(DIRECTORY_TO_WATCH).exists():
+        logger.info('making directory:', DIRECTORY_TO_WATCH)
+        Path(DIRECTORY_TO_WATCH).mkdir()
+
+    logger.info(f'changing into: {DIRECTORY_TO_WATCH}')
     os.chdir(DIRECTORY_TO_WATCH)
+
+    # start watcher
     logger.info('starting watcher')
     w = Watcher()
     w.run()
