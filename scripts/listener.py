@@ -67,7 +67,7 @@ class Handler(FileSystemEventHandler):
             return
         
         # ignore non yaml changes
-        if is_yml(event.src_path):
+        if not is_yml(event.src_path):
             return
 
         # it may take a second for the joblib (below) to be added
