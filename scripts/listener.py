@@ -90,22 +90,17 @@ class Handler(FileSystemEventHandler):
     def on_any_event(event):
         logger.info(f"{event.event_type} on: [{event.src_path}]")
 
-        # ignore directory events
         if event.is_directory:
             return
 
-        # ignore events that are not new files
         if event.event_type != "created":
             return
 
-        # ignore non yaml changes
         if not is_yml(event.src_path):
             return
 
-        # it may take a second for the joblib (below) to be added
         time.sleep(1)
 
-        # ignore yaml additions without joblib
         if not has_corresponding_joblib(event.src_path):
             return
 
