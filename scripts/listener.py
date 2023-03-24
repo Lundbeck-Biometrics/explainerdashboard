@@ -1,4 +1,4 @@
-'''
+"""
 Watchdog listener demo adapted for explainer dashboard.
 
 ## How it works
@@ -30,7 +30,7 @@ The nohup process may also pipe output to a logfile.
 ### Trello Task
 
 **[implement-explainer-dashboard-watchdog](https://trello.com/c/wls37ubu/79-implement-explainer-dashboard-watchdog)**
-'''
+"""
 
 import time
 import os
@@ -45,6 +45,7 @@ from pathlib import Path
 # constants
 DIRECTORY_TO_WATCH = "/home/sagemaker-user/dashboard-definitions"
 logfile = "/tmp/dashboard-explainer-watchdog-listener-python-logging.log"
+
 
 def get_logger(logger_name: str = "script_logger") -> logging.Logger:
     """Returns the configured logger for the pipeline script"""
@@ -63,7 +64,6 @@ def get_logger(logger_name: str = "script_logger") -> logging.Logger:
 
 
 class Watcher:
-
     def __init__(self):
         # self.observer = Observer()
         self.observer = PollingObserver()
@@ -78,15 +78,14 @@ class Watcher:
         except:
             self.observer.stop()
             logger.info("Exiting - stopping threads")
-            for thread in threading.enumerate(): 
-                logger.info(f'{thread.name = }')
+            for thread in threading.enumerate():
+                logger.info(f"{thread.name = }")
                 thread.join()
 
         self.observer.join()
 
 
 class Handler(FileSystemEventHandler):
-
     @staticmethod
     def on_any_event(event):
         logger.info(f"{event.event_type} on: [{event.src_path}]")
@@ -94,11 +93,11 @@ class Handler(FileSystemEventHandler):
         # ignore directory events
         if event.is_directory:
             return
-        
+
         # ignore events that are not new files
-        if event.event_type != 'created':
+        if event.event_type != "created":
             return
-        
+
         # ignore non yaml changes
         if not is_yml(event.src_path):
             return
@@ -113,35 +112,35 @@ class Handler(FileSystemEventHandler):
         # start dashboard
         file = extract_file(event.src_path)
         logger.info(f"Starting explainer dashboard thread for {file}")
-        threading.Thread(
-            target=lambda: ExplainerDashboard.from_config(file).run(),
-            name=file
-        ).start()
+        threading.Thread(target=lambda: ExplainerDashboard.from_config(file).run(), name=file).start()
+
 
 def is_yml(file):
-    '''check if a file extension is .yml'''
+    """check if a file extension is .yml"""
     return file.lower().endswith(".yaml")
 
+
 def extract_file(file):
-    '''extract file from a file path'''
+    """extract file from a file path"""
     return file.split("/")[-1]
 
+
 def has_corresponding_joblib(file_path):
-    '''check if a file with the same name but with the extension .joblib exists'''
-    return Path(file_path.replace('.yaml', '.joblib')).exists()
+    """check if a file with the same name but with the extension .joblib exists"""
+    return Path(file_path.replace(".yaml", ".joblib")).exists()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logger = get_logger()
 
     if not Path(DIRECTORY_TO_WATCH).exists():
-        logger.info('making directory:', DIRECTORY_TO_WATCH)
+        logger.info("making directory:", DIRECTORY_TO_WATCH)
         Path(DIRECTORY_TO_WATCH).mkdir()
 
-    logger.info(f'changing into: {DIRECTORY_TO_WATCH}')
+    logger.info(f"changing into: {DIRECTORY_TO_WATCH}")
     os.chdir(DIRECTORY_TO_WATCH)
 
     # start watcher
-    logger.info('starting watcher')
+    logger.info("starting watcher")
     w = Watcher()
     w.run()
