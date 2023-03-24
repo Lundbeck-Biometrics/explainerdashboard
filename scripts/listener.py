@@ -1,4 +1,37 @@
-# needs watchdog and explainer dashboard
+'''
+Watchdog listener demo adapted for explainer dashboard.
+
+## How it works
+
+The script is supposed to be in an S3 bucket which our SageMaker has access to.
+The script is fetched by a SageMaker lifecycle script and started as an asynchronous process with `nohup`. The lifecycle script is not included in this PR.
+
+### Listening Directory
+
+Once started, the script listens to changes in:
+`DIRECTORY_TO_WATCH = "/home/sagemaker-user/dashboard-definitions"`
+
+### Explainer Dashboard
+
+If the following event conditions are observed, the script will start an explainer dashboard in a separate thread:
+* file added
+* file is a yaml file
+* file has a corresponding joblib file
+
+The thread runs until it crashes or is shut down (i.e. explainer dashboard interface)
+
+### Log file
+
+The script outputs logs in:
+`logfile = "/tmp/dashboard-explainer-watchdog-listener-python-logging.log"`
+
+The nohup process may also pipe output to a logfile.
+
+### Trello Task
+
+**[implement-explainer-dashboard-watchdog](https://trello.com/c/wls37ubu/79-implement-explainer-dashboard-watchdog)**
+'''
+
 import time
 import os
 import sys
