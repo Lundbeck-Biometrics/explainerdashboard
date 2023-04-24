@@ -1,4 +1,5 @@
 import inspect
+from pathlib import Path
 
 def submit_dashboard(name, port, explainer):
     '''Packages dashboard information and exports it into two files (yaml and joblib pair).
@@ -11,11 +12,18 @@ def submit_dashboard(name, port, explainer):
     model: the model object (random forrest or whatever)'''
 
     DIRECTORY_TO_WATCH = "/home/sagemaker-user/dashboard-definitions"
+    PYTHON_SITE_PACKAGES = '/opt/conda/envs/studio/lib/python3.9/site-packages'
+    filename_prefix = name.replace(' ', '_').replace('.', '_')
+    python_syspaths=Path(f"{DIRECTORY_TO_WATCH}/{filename_prefix}.syspaths")
 
     inspection = inspect.getmodule(explainer.model)
     print(f'model origin {inspection = }')
     if inspection and '__file__' in dir(inspection) and inspection.__file__.startswith('/home/sagemaker-user/'):
-        raise EnvironmentError(f'WARNING! Detected Custom Python model: {inspection}')
+        module_path_parent = Path(inspection.__file__).parent
+        if not module_path_parent.exists():
+            raise EnvironmentError(f'{module_path_parent} does not exists')
+        python_syspaths.write_text(module_path_parent)
+        print(f'Detected Custom Python code detected\n\t{inspection = }\n\t{python_syspaths = }')
 
     db = ExplainerDashboard(
         explainer,
@@ -28,7 +36,6 @@ def submit_dashboard(name, port, explainer):
     )
 
     # export dashboard files
-    filename_prefix = name.replace(' ', '_').replace('.', '_')
     db.to_yaml(
         filepath=f"{DIRECTORY_TO_WATCH}/{filename_prefix}.yaml",
         explainerfile=f"{DIRECTORY_TO_WATCH}/{filename_prefix}.joblib",
