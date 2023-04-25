@@ -105,6 +105,13 @@ class Handler(FileSystemEventHandler):
         if not has_corresponding_joblib(event.src_path):
             return
 
+        if has_corresponding_joblib(event.src_path):
+            print('syspath detected!')
+            external_syspaths = Path(event.src_path.replace(".yaml", ".syspaths"))
+            for ext_syspath in external_syspaths.read_text().split('\n'):
+                print('appending', ext_syspath, 'to sys.paths')
+                sys.path.append(ext_syspath)
+
         # start dashboard
         file = extract_file(event.src_path)
         logger.info(f"Starting explainer dashboard thread for {file}")
@@ -124,6 +131,10 @@ def extract_file(file):
 def has_corresponding_joblib(file_path):
     """check if a file with the same name but with the extension .joblib exists"""
     return Path(file_path.replace(".yaml", ".joblib")).exists()
+
+def has_corresponding_syspaths(file_path):
+    """check if a file with the same name but with the extension .joblib exists"""
+    return Path(file_path.replace(".yaml", ".syspaths")).exists()
 
 
 if __name__ == "__main__":
