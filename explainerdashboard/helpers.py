@@ -9,7 +9,7 @@ def submit_dashboard(name, port, explainer):
     name: title for dashboard, also used for naming exported files
     port: the port on which sagemaker studio should spin up the dashboard
           (nothing will happen if the port is already in use)
-    model: the model object (random forrest or whatever)'''
+    explainer: contains model and validation data, must be of type `ClassifierExplainer` or `RegressionExplainer`'''
 
     DIRECTORY_TO_WATCH = "/home/sagemaker-user/dashboard-definitions"
     PYTHON_SITE_PACKAGES = '/opt/conda/envs/studio/lib/python3.9/site-packages'
