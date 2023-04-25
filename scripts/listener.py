@@ -106,10 +106,10 @@ class Handler(FileSystemEventHandler):
             return
 
         if has_corresponding_joblib(event.src_path):
-            print('syspath detected!')
+            logger.info('syspath file detected!')
             external_syspaths = Path(event.src_path.replace(".yaml", ".syspaths"))
             for ext_syspath in external_syspaths.read_text().split('\n'):
-                print('appending', ext_syspath, 'to sys.paths')
+                logger.info('appending', ext_syspath, 'to sys.paths')
                 sys.path.append(ext_syspath)
 
         # start dashboard
