@@ -105,7 +105,7 @@ class Handler(FileSystemEventHandler):
         if not has_corresponding_joblib(event.src_path):
             return
 
-        if has_corresponding_joblib(event.src_path):
+        if has_corresponding_syspaths(event.src_path):
             logger.info('syspath file detected!')
             external_syspaths = Path(event.src_path.replace(".yaml", ".syspaths"))
             for ext_syspath in external_syspaths.read_text().split('\n'):
